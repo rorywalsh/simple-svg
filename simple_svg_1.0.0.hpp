@@ -180,8 +180,19 @@ namespace svg
         enum Defaults { Transparent = -1, Aqua, Black, Blue, Brown, Cyan, Fuchsia,
             Green, Lime, Magenta, Orange, Purple, Red, Silver, White, Yellow };
 
-        Color(int r, int g, int b) : transparent(false), red(r), green(g), blue(b) { }
-        Color(Defaults color)
+		Color(int hexValue)
+		{
+			std::vector<int> rgb;
+			const int r = ((hexValue >> 16) & 0xFF) / 255.0;  // Extract the RR byte
+			const int g = ((hexValue >> 8) & 0xFF) / 255.0;   // Extract the GG byte
+			const int b = ((hexValue) & 0xFF) / 255.0;        // Extract the BB byte
+
+			assign(r, g, b);
+		}
+
+		Color(int r, int g, int b) : transparent(false), red(r), green(g), blue(b) { }
+        
+		Color(Defaults color)
             : transparent(false), red(0), green(0), blue(0)
         {
             switch (color)
@@ -214,6 +225,7 @@ namespace svg
                 ss << "rgb(" << red << "," << green << "," << blue << ")";
             return ss.str();
         }
+
     private:
             bool transparent;
             int red;
@@ -357,13 +369,48 @@ namespace svg
         double radius_height;
     };
 
+	//====================================================================
+	class RoundedRectangle : public Shape
+	{
+	public:
+		RoundedRectangle(Point const& edge, double width, double height, double corners,
+			Fill const& fill = Fill(), Stroke const& stroke = Stroke())
+			: Shape(fill, stroke), edge(edge), width(width), corners(corners),
+			height(height) { }
+
+		std::string toString(Layout const& layout) const
+		{
+			std::stringstream ss;
+			ss << elemStart("rect") << attribute("x", translateX(edge.x, layout))
+				<< attribute("y", translateY(edge.y, layout))
+				<< attribute("width", translateScale(width, layout))
+				<< attribute("height", translateScale(height, layout))
+				<< attribute("rx", translateScale(corners, layout))
+				<< fill.toString(layout) << stroke.toString(layout) << emptyElemEnd();
+			return ss.str();
+		}
+		void offset(Point const& offset)
+		{
+			edge.x += offset.x;
+			edge.y += offset.y;
+		}
+	private:
+		Point edge;
+		double width;
+		double height;
+		double corners;
+	};
+
+	//===================================================
+
     class Rectangle : public Shape
     {
     public:
         Rectangle(Point const & edge, double width, double height,
             Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-            : Shape(fill, stroke), edge(edge), width(width),
+            : Shape(fill, stroke), edge(edge), width(width), corners(corners),
             height(height) { }
+
         std::string toString(Layout const & layout) const
         {
             std::stringstream ss;
@@ -383,6 +430,7 @@ namespace svg
         Point edge;
         double width;
         double height;
+		double corners;
     };
 
     class Line : public Shape
