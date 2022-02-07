@@ -180,12 +180,16 @@ namespace svg
         enum Defaults { Transparent = -1, Aqua, Black, Blue, Brown, Cyan, Fuchsia,
             Green, Lime, Magenta, Orange, Purple, Red, Silver, White, Yellow };
 
-		Color(int hexValue)
+		Color(std::string hexCode) : transparent(false)
 		{
-			std::vector<int> rgb;
-			const int r = ((hexValue >> 16) & 0xFF) / 255.0;  // Extract the RR byte
-			const int g = ((hexValue >> 8) & 0xFF) / 255.0;   // Extract the GG byte
-			const int b = ((hexValue) & 0xFF) / 255.0;        // Extract the BB byte
+			int r, g, b;
+			if (hexCode.at(0) == '#') {
+				hexCode = hexCode.erase(0, 1);
+			}
+
+			std::istringstream(hexCode.substr(0, 2)) >> std::hex >> r;
+			std::istringstream(hexCode.substr(2, 2)) >> std::hex >> g;
+			std::istringstream(hexCode.substr(4, 2)) >> std::hex >> b;
 
 			assign(r, g, b);
 		}
@@ -246,6 +250,7 @@ namespace svg
         Fill(Color::Defaults color) : color(color) { }
         Fill(Color color = Color::Transparent)
             : color(color) { }
+
         std::string toString(Layout const & layout) const
         {
             std::stringstream ss;
