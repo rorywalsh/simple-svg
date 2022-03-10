@@ -194,6 +194,7 @@ namespace svg
 			assign(r, g, b);
 		}
 
+
 		Color(int r, int g, int b) : transparent(false), red(r), green(g), blue(b) { }
         
 		Color(Defaults color)
@@ -248,24 +249,26 @@ namespace svg
     {
     public:
         Fill(Color::Defaults color) : color(color) { }
-        Fill(Color color = Color::Transparent)
-            : color(color) { }
+        Fill(Color color = Color::Transparent, float opacity = 1.f)
+            : color(color), opacity(opacity) { }
 
         std::string toString(Layout const & layout) const
         {
             std::stringstream ss;
-            ss << attribute("fill", color.toString(layout));
+            ss << attribute("fill", color.toString(layout)) << attribute("fill-opacity", opacity);
             return ss.str();
         }
     private:
         Color color;
+		float opacity;
     };
 
     class Stroke : public Serializeable
     {
     public:
-        Stroke(double width = -1, Color color = Color::Transparent, bool nonScalingStroke = false)
-            : width(width), color(color), nonScaling(nonScalingStroke) { }
+        Stroke(double width = -1, Color color = Color::Transparent, float opacity = 1.f, bool nonScalingStroke = false)
+            : width(width), color(color), nonScaling(nonScalingStroke), opacity(opacity) { }
+
         std::string toString(Layout const & layout) const
         {
             // If stroke width is invalid.
@@ -273,7 +276,7 @@ namespace svg
                 return std::string();
 
             std::stringstream ss;
-            ss << attribute("stroke-width", translateScale(width, layout)) << attribute("stroke", color.toString(layout));
+            ss << attribute("stroke-width", translateScale(width, layout)) << attribute("stroke", color.toString(layout)) << attribute("stroke-opacity", opacity);
             if (nonScaling)
                ss << attribute("vector-effect", "non-scaling-stroke");
             return ss.str();
@@ -281,6 +284,7 @@ namespace svg
     private:
         double width;
         Color color;
+		float opacity = 1.f;
         bool nonScaling;
     };
 
@@ -303,7 +307,7 @@ namespace svg
     {
     public:
         Shape(Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-            : fill(fill), stroke(stroke) { }
+            : fill(fill), stroke(stroke){ }
         virtual ~Shape() { }
         virtual std::string toString(Layout const & layout) const = 0;
         virtual void offset(Point const & offset) = 0;
@@ -311,6 +315,7 @@ namespace svg
         Fill fill;
         Stroke stroke;
     };
+
     template <typename T>
     inline std::string vectorToString(std::vector<T> collection, Layout const & layout)
     {
@@ -403,7 +408,7 @@ namespace svg
 		Point edge;
 		double width;
 		double height;
-		double corners;
+		double corners = 0;
 	};
 
 	//===================================================
@@ -413,7 +418,7 @@ namespace svg
     public:
         Rectangle(Point const & edge, double width, double height,
             Fill const & fill = Fill(), Stroke const & stroke = Stroke())
-            : Shape(fill, stroke), edge(edge), width(width), corners(corners),
+            : Shape(fill, stroke), edge(edge), width(width),
             height(height) { }
 
         std::string toString(Layout const & layout) const
@@ -435,7 +440,6 @@ namespace svg
         Point edge;
         double width;
         double height;
-		double corners;
     };
 
     class Line : public Shape
